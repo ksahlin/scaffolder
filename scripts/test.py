@@ -2,6 +2,8 @@ from besst.sequence import SubSequence as ss
 from besst.sequence import Scaffold
 from besst.sequence import Contig
 from besst import score
+from besst import interval
+
 # we are reading lines from a file with format for each link:
 #contig1 	start_cord_cont1 	end_cord_contig1	contig2	 start_cord_cont2  end_cord_cont2 nr_links 
 # %observations subseq1 (coordinates on the subseq of contig1 in space separated format with '%' sign first
@@ -56,8 +58,22 @@ for edge in G.iteredges():
 	print edge
 	print G[edge[0]][edge[1]]['s']
 
-for node in G.
+score_list=[]
+for node in G.nodes_iter():
+	nbrs = G.neighbors(node)
+	if nbrs:
+		i = interval.Interval(node)
+		for nbr in nbrs:
+			start = G[node][nbr]['d']  
+			end = G[node][nbr]['d'] + len(nbr[0])
+			weight = G[node][nbr]['s']
+			i.add_interval(nbr[0],start,end,weight)
+		print i.intervals
 
+		i.weighted_interval_scheduling()
+		score_list.append(i.optimal_path)
+
+print score_list
 
 print (G.neighbors((s1,True)))
 
