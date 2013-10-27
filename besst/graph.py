@@ -20,6 +20,11 @@ class SequenceGraph(Graph):
 			False == Left end of sequence """
 		super(SequenceGraph, self).add_nodes_from([(node,True),(node,False)])
 
+	def remove_self_links(self):
+		for edge in super(SequenceGraph, self).edges():
+			if edge[0][0] == edge[1][0]:
+				self.remove_edge(edge[0],edge[1])
+
 
 	def iteredges(self):
 		'''
@@ -36,15 +41,65 @@ class SequenceGraph(Graph):
 		return filter(lambda x: x[0] != node[0],super(SequenceGraph, self).neighbors(node))
 
 
-	def make_trusted_edge(self,node,nbr):
-		return
+	def make_trusted_edge(self,node,nbr,distance):
+		self.add_edge(node, nbr,s=None,d=distance)
 
-	def make_trusted_path(self,edges):
-		return
-	# def most_likely_neighbor(self,node):
-	# 	# TODO: More sophisticated method for most likely neighbor
-	# 	return sorted(self.neighbors(node),key=lambda nbr: self[node][nbr]['s'])[0]
+	def make_trusted_path(self,interval_object):
+
+		visited = set()
+		# remove edges from one end (inner end) from start node
+		self.remove_nbr_edges(interval_object.startnode)
+		visited.add(interval_object.startnode)
+		# remove edges from both ends from all inner sequences
+		# if more than one neighbor in interval
+		if len(interval_object.optimal_path) > 1:
+			for interval in interval_object.intervals[:-1]:
+				seq_obj = interval[3][0]
+				self.remove_nbr_edges((seq_obj,True))
+				self.remove_nbr_edges((seq_obj,False))
+				visited.add((seq_obj,True))
+				visited.add((seq_obj,False))
+
+		# remove edges from one end (inner end) from end node
+		last_node_in_path = interval_object.intervals[-1][3]
+		self.remove_nbr_edges(last_node_in_path)
+		visited.add(last_node_in_path)
+
+		# make first trusted edge
+		self.make_trusted_edge(interval_object.startnode,interval_object.intervals[0][3],interval_object.intervals[0][0])
+		# the rest 
+		for i1, i2 in zip(interval_object.intervals, interval_object.intervals[1:]):
+			self.make_trusted_edge((i1[3][0],not i1[3][1]),i2[3], i2[0] - i1[1])
+
+		return(visited)
 			
+	def remove_nbr_edges(self,node):
+		for nbr in self.neighbors(node):
+			self.remove_edge(node,nbr)
+
+
+
+
+##
+# Start herre
+dflvmrklvmrkjv
+	def get_scaffold_path(self,start):
+		path = []
+		# path.append((start[0],not start[1]))
+		for node in self.sequence_generator(start):
+			path.append(node)
+		return path
+
+	def sequence_generator(self,node,path):
+		nbrs = self.neighbors((node[0],not node[1]))
+		print nbrs[0]
+		if nbrs:
+			path.append((node[0],not node[1]))
+			self.get_scaffold_path(nbrs[0])
+
+
+
+
 
 
 
@@ -57,4 +112,5 @@ class SequenceGraph(Graph):
 	# def closest_neighbor(self):
 	# 	super(SequenceGraph, self).neighbors(self.closest_neighbor)
 	# 	pass
+
 

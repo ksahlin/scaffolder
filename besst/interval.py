@@ -37,8 +37,8 @@ class Interval(object):
         self.optimal_path = []
         self.intervals = []
 
-    def add_interval(self,seq_obj,start,end,weight):
-        self.intervals.append((start,end,weight,seq_obj)) 
+    def add_interval(self,node,start,end,weight):
+        self.intervals.append((start,end,weight,node)) 
 
     def weighted_interval_scheduling(self):
         '''
@@ -86,6 +86,7 @@ class Interval(object):
                     return find_optimal_path(j-1)
 
         find_optimal_path(len(G))
+        print self.optimal_path
         return S[len(G)]
 
 

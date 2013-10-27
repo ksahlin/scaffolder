@@ -52,10 +52,13 @@ class Contig(object):
 
 class Scaffold(object):
 	"""docstring for Scaffold"""
-	def __init__(self, name):
+	def __init__(self, name,):
 		super(Scaffold, self).__init__()
 		self.name = name
-		self.subsequences = set()
+		self.subsequences = []
+
+	def __call__(self,node):
+		self.subsequences.append(node[0],node[1],)
 
 	def __str__(self):
 		ordered_seqs = self.order_seqs()
