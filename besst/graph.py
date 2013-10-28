@@ -17,7 +17,9 @@ class SequenceGraph(Graph):
 
 	def add_node(self,node):
 		""" True == Right end of sequence,
-			False == Left end of sequence """
+			False == Left end of sequence 
+			Is sequence links to another sequence from 'True' end, 
+			it is forward oriented, otherwise it is reverse complemented"""
 		super(SequenceGraph, self).add_nodes_from([(node,True),(node,False)])
 
 	def remove_self_links(self):
@@ -41,11 +43,12 @@ class SequenceGraph(Graph):
 		return filter(lambda x: x[0] != node[0],super(SequenceGraph, self).neighbors(node))
 
 
+
 	def make_trusted_edge(self,node,nbr,distance):
 		self.add_edge(node, nbr,s=None,d=distance)
 
 	def make_trusted_path(self,interval_object):
-
+		#TODO: Eventually split this function into two functions.
 		visited = set()
 		# remove edges from one end (inner end) from start node
 		self.remove_nbr_edges(interval_object.startnode)
@@ -77,27 +80,51 @@ class SequenceGraph(Graph):
 		for nbr in self.neighbors(node):
 			self.remove_edge(node,nbr)
 
+	# def get_scaffold_path(self,start):
+	# 	path = []
+	# 	# path.append((start[0],not start[1]))
+	# 	for node in self.sequence_generator(start):
+	# 		path.append(node)
+	# 	return path
+
+	# def path(self,node):
+	# 	nbrs = self.neighbors((node[0],not node[1]))
+	# 	print nbrs[0]
+	# 	if nbrs:
+	# 		yield (node[0],not node[1])
+	# 		path.append((node[0],not node[1]))
+	# 		self.get_scaffold_path(nbrs[0])
 
 
+class LinearPath(SequenceGraph):
+	"""Iterator over the remaining linear paths in a 
+		SequenceGraph object"""
+	def __init__(self, graph, node):
+		super(LinearPath, self).__init__()
+		self.graph = graph
+		self.node = (node[0],not node[1])
+		print self.node[0]
+		self.exit = False
+	def __iter__(self):
+		return self
 
-##
-# Start herre
-dflvmrklvmrkjv
-	def get_scaffold_path(self,start):
-		path = []
-		# path.append((start[0],not start[1]))
-		for node in self.sequence_generator(start):
-			path.append(node)
-		return path
+	def next(self):
+		if self.exit:
+			raise StopIteration
 
-	def sequence_generator(self,node,path):
-		nbrs = self.neighbors((node[0],not node[1]))
-		print nbrs[0]
-		if nbrs:
-			path.append((node[0],not node[1]))
-			self.get_scaffold_path(nbrs[0])
+		node = self.node
+		nbr = self.graph.neighbors(self.node)
+		if not nbr:
+			self.exit = True
+			return(node, 0)
 
+		else:
+			self.node = (nbr[0][0],not nbr[0][1])
+			gap = self.graph[node][nbr[0]]['d']
+			print 'Gap:', gap
+			return(node,gap)
 
+		
 
 
 

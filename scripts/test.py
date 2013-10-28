@@ -3,6 +3,8 @@ from besst.sequence import Scaffold
 from besst.sequence import Contig
 from besst import score
 from besst import interval
+from besst.graph import SequenceGraph as g
+from besst.graph import LinearPath
 
 # we are reading lines from a file with format for each link:
 #contig1 	start_cord_cont1 	end_cord_contig1	contig2	 start_cord_cont2  end_cord_cont2 nr_links 
@@ -23,6 +25,7 @@ s3 = ss(c2,0,3)
 s4 = ss(c2,3,6)
 print len(s1),len(s2)
 
+
 # scaf = Scaffold('scaf1')
 # # scaf.add_subsequence(s2,False,0)
 # scaf.add_subsequence(s1,False,7)
@@ -30,10 +33,6 @@ print(s1)
 print(s2)
 # print(scaf)
 
-
-
-
-from besst.graph import SequenceGraph as g
 
 G = g()
 
@@ -120,25 +119,37 @@ for node in G.nodes_iter():
 	if not G.neighbors((node[0],False)):
 		start_nodes.add((node[0],False))
 
-print start_nodes
+print 'start nodes',start_nodes
+
+for node in G.nodes():
+	print repr(node[0]), node
 
 visited =set()
 scaffold_index = 1
 for start_node in start_nodes:
 	if start_node not in visited:
-		print 'Next scaffold'
+		print 'Making scaffold',scaffold_index
 		s = Scaffold(scaffold_index)
 		scaffold_index += 1
-		path = G.get_scaffold_path(start_node)
-		for node in path:
+		path = LinearPath(G,start_node)
+		for node,gap in path:
 			print node[0].contig.name
-			#s(node)
-
-
+			if node[1]:
+				node[0].rc = False
+				s(str(node[0]))
+			else:
+				node[0].rc = True
+				s(str(node[0]))
+			if gap <= 0:
+				s('n')
+			else:
+				s('N'*gap)
 		visited.add(start_node)
-		visited.add((node[0], not node[1]))
+		visited.add(node)
+		print visited
 
 
+print s
 
 
 # print (G.neighbors((s1,True)))
