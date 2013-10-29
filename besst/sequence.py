@@ -1,9 +1,9 @@
 class SubSequence(object):
 	"""Docstring for Subsequence"""
 	reverse_table = {'A':'T','C':'G','G':'C','T':'A'}
-	def __init__(self, contig_object,contig_start,contig_end):
+	def __init__(self, name, contig_object,contig_start,contig_end):
 		super (SubSequence, self).__init__()
-
+		self.name = name
 		# Contig whereabouts, indexed like lists, i.e.
 		# 0-indexed and [:7] means positions 0 to 6
 		self.contig = contig_object
