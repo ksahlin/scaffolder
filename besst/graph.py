@@ -92,7 +92,6 @@ class LinearPath(SequenceGraph):
 		super(LinearPath, self).__init__()
 		self.graph = graph
 		self.node = (node[0],not node[1])
-		print self.node[0]
 		self.exit = False
 	def __iter__(self):
 		return self
@@ -110,7 +109,6 @@ class LinearPath(SequenceGraph):
 		else:
 			self.node = (nbr[0][0],not nbr[0][1])
 			gap = self.graph[node][nbr[0]]['d']
-			print 'Gap:', gap
 			return(node,gap)
 
 		
