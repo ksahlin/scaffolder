@@ -43,57 +43,46 @@ class SequenceGraph(Graph):
 		return filter(lambda x: x[0] != node[0],super(SequenceGraph, self).neighbors(node))
 
 
+	def remove_nbr_edges(self,node):
+		for nbr in self.neighbors(node):
+			self.remove_edge(node,nbr)
 
-	def make_trusted_edge(self,node,nbr,distance):
-		self.add_edge(node, nbr,s=None,d=distance)
-
-	def make_trusted_path(self,interval_object):
-		#TODO: Eventually split this function into two functions.
+	def remove_deactivated_edges(self,wisp_instance):
+		''' Takes a weighted interval scheduling problem instance that
+			has been given an optimal sulution (using a common DP- algorithm)
+			and removes all edges from intervals that was not included in the optimal solution.
+		'''
 		visited = set()
 		# remove edges from one end (inner end) from start node
-		self.remove_nbr_edges(interval_object.startnode)
-		visited.add(interval_object.startnode)
+		self.remove_nbr_edges(wisp_instance.startnode)
+		visited.add(wisp_instance.startnode)
 		# remove edges from both ends from all inner sequences
 		# if more than one neighbor in interval
-		if len(interval_object.optimal_path) > 1:
-			for interval in interval_object.intervals[:-1]:
-				seq_obj = interval[3][0]
+		if len(wisp_instance.optimal_path) > 1:
+			for interval in wisp_instance.intervals[:-1]:
+				seq_obj = interval.name
 				self.remove_nbr_edges((seq_obj,True))
 				self.remove_nbr_edges((seq_obj,False))
 				visited.add((seq_obj,True))
 				visited.add((seq_obj,False))
 
 		# remove edges from one end (inner end) from end node
-		last_node_in_path = interval_object.intervals[-1][3]
+		last_node_in_path = wisp_instance.intervals[-1].name
 		self.remove_nbr_edges(last_node_in_path)
 		visited.add(last_node_in_path)
-
-		# make first trusted edge
-		self.make_trusted_edge(interval_object.startnode,interval_object.intervals[0][3],interval_object.intervals[0][0])
-		# the rest 
-		for i1, i2 in zip(interval_object.intervals, interval_object.intervals[1:]):
-			self.make_trusted_edge((i1[3][0],not i1[3][1]),i2[3], i2[0] - i1[1])
-
 		return(visited)
 			
-	def remove_nbr_edges(self,node):
-		for nbr in self.neighbors(node):
-			self.remove_edge(node,nbr)
-
-	# def get_scaffold_path(self,start):
-	# 	path = []
-	# 	# path.append((start[0],not start[1]))
-	# 	for node in self.sequence_generator(start):
-	# 		path.append(node)
-	# 	return path
-
-	# def path(self,node):
-	# 	nbrs = self.neighbors((node[0],not node[1]))
-	# 	print nbrs[0]
-	# 	if nbrs:
-	# 		yield (node[0],not node[1])
-	# 		path.append((node[0],not node[1]))
-	# 		self.get_scaffold_path(nbrs[0])
+	def construct_trusted_edges(self,wisp_instance):
+		''' Takes a weighted interval scheduling problem instance that
+			has been given an optimal sulution (using a common DP- algorithm)
+			and constructs edges between all intervals that were found in the optimal 
+			solution.
+		'''
+		# make first trusted edge
+		self.add_edge(wisp_instance.startnode,wisp_instance.intervals[0].name,d=wisp_instance.intervals[0].start,s=None)
+		# the rest 
+		for i1, i2 in zip(wisp_instance.intervals, wisp_instance.intervals[1:]):
+			self.add_edge((i1.name[0],not i1.name[1]),i2.name, d=i2.start - i1.end,s=None)
 
 
 class LinearPath(SequenceGraph):
