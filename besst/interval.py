@@ -50,7 +50,7 @@ class WeightedIntervalProblem(object):
     def add_interval(self,interval_object):
         self.intervals.append(interval_object) 
 
-    def weighted_interval_scheduling(self):
+    def weighted_interval_scheduling(self,overlap_parameter):
         '''
         Input a graph G, whose structure is a list of Interval instances.
 
@@ -75,26 +75,25 @@ class WeightedIntervalProblem(object):
         end = [x.end for x in G]
 
         S[0] = 0
-        S[1] = G[0].weight
+        S[1] = G[0].weight if G[0].start >= - overlap_parameter else 0
         for i in xrange(2, len(G)+1):
-            S[i] = max(S[i-1], G[i-1].weight + S[ bisect.bisect_left(end, start[i-1]) ])
+            S[i] = max(S[i-1], G[i-1].weight + S[ bisect.bisect_left(end , start[i-1] + overlap_parameter) ])
 
         self.score = S[len(G)]
-
+        
         def find_optimal_path(j):
             """ Recursive function to track down the path that gave rise to the optimal solution
             """
             if j == 0:
                 return
             else:
-                if G[j-1].weight + S[ bisect.bisect_left(end, start[j-1]) ] >= S[j-1]:
-                    find_optimal_path(bisect.bisect_left(end, start[j-1]))
+                if G[j-1].weight + S[ bisect.bisect_left(end, start[j-1] + overlap_parameter) ] >= S[j-1]:
+                    find_optimal_path(bisect.bisect_left(end, start[j-1] + overlap_parameter))
                     self.optimal_path.append(self.intervals[j-1])
                 else:
                     return find_optimal_path(j-1)
 
         find_optimal_path(len(G))
-        return S[len(G)]
 
 
 if __name__ == "__main__":

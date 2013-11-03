@@ -47,7 +47,7 @@ def read_input(args):
 
 
 
-def compute_weighted_interval_solutions(G):
+def compute_weighted_interval_solutions(G,overlap):
 	score_list=[]
 	for node in G.nodes_iter():
 		nbrs = G.neighbors(node)
@@ -58,37 +58,35 @@ def compute_weighted_interval_solutions(G):
 					end=G[node][nbr]['d'] + len(nbr[0]),weight=G[node][nbr]['s'],node=nbr)
 				wip.add_interval(i)
 
-			wip.weighted_interval_scheduling()
+			wip.weighted_interval_scheduling(overlap)
 			wip.intervals = []
 			score_list.append(wip) 
+
 	return(score_list)
 
 
 def make_trusted_paths(G,score_list):
 	visited = set()
-	for i in sorted(score_list,reverse=True,key=lambda x : x.score):
-		print i.score, i.startnode,i.optimal_path
 	for wisp_instance in sorted(score_list,reverse=True,key=lambda x : x.score):
-		potential_nodes_to_join =set()
-		potential_nodes_to_join.add(wisp_instance.startnode)
-		if len(wisp_instance.optimal_path) > 1:
-			for seq_obj in map(lambda x: x.node[0], wisp_instance.optimal_path[:-1]):
-				potential_nodes_to_join.add((seq_obj,True))
-				potential_nodes_to_join.add((seq_obj,False))
-		potential_nodes_to_join.add(wisp_instance.optimal_path[-1].node)
+		if wisp_instance.score > 0: # 0 score if no solution was found, e.g. too large overlap
+			potential_nodes_to_join =set()
+			potential_nodes_to_join.add(wisp_instance.startnode)
+			if len(wisp_instance.optimal_path) > 1:
+				for seq_obj in map(lambda x: x.node[0], wisp_instance.optimal_path[:-1]):
+					potential_nodes_to_join.add((seq_obj,True))
+					potential_nodes_to_join.add((seq_obj,False))
+			potential_nodes_to_join.add(wisp_instance.optimal_path[-1].node)
 
-		if not visited.intersection(potential_nodes_to_join):
-			print "here", wisp_instance.score
-			print potential_nodes_to_join
-			##
-			# make trusted path create an unbreakable linear path in the
-			# scaffold graph and returns all the visited nodes
+			if not visited.intersection(potential_nodes_to_join):
+				##
+				# make trusted path create an unbreakable linear path in the
+				# scaffold graph and returns all the visited nodes
+				G.remove_deactivated_edges(wisp_instance) 
+				G.construct_trusted_edges(wisp_instance)
+
+				visited.update(potential_nodes_to_join)
+		else:
 			G.remove_deactivated_edges(wisp_instance) 
-			G.construct_trusted_edges(wisp_instance)
-
-			visited.update(potential_nodes_to_join)
-			print 'vis:'
-			print visited
 
 
 def make_scaffolds(G):
@@ -109,7 +107,6 @@ def make_scaffolds(G):
 
 	visited =set()
 	scaffold_index = 1
-	print start_nodes
 	for start_node in start_nodes:
 		if start_node not in visited:
 			s = Scaffold(scaffold_index)
@@ -117,13 +114,12 @@ def make_scaffolds(G):
 			for node,gap in path:
 				if node[1]:
 					node[0].rc = False
-					print repr(node[0])
 					s(str(node[0]))
 				else:
 					node[0].rc = True
-					print repr(node[0])
 					s(str(node[0]))
 				if gap <= 0:
+					#TODO: Eventually merge/remove overlapping sequences
 					s('n')
 				else:
 					s('N'*gap)
@@ -138,7 +134,7 @@ def make_scaffolds(G):
 
 def main(args):
 	G = read_input(args)
-	score_list = compute_weighted_interval_solutions(G)
+	score_list = compute_weighted_interval_solutions(G,args.overlap)
 	make_trusted_paths(G,score_list)
 	make_scaffolds(G)
 
@@ -151,6 +147,7 @@ if __name__ == "__main__":
     parser.add_argument('contigs', type=str, help='contigs fasta file')
     parser.add_argument('links', type=str, help='Links txt file.')
     parser.add_argument('seqs', type=str, help='Sequence file.')
+    parser.add_argument('overlap', type=int, help='Overlap parameter')
     args = parser.parse_args()
     main(args)
 
