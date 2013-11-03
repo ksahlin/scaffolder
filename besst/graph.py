@@ -52,25 +52,25 @@ class SequenceGraph(Graph):
 			has been given an optimal sulution (using a common DP- algorithm)
 			and removes all edges from intervals that was not included in the optimal solution.
 		'''
-		visited = set()
+		# visited = set()
 		# remove edges from one end (inner end) from start node
 		self.remove_nbr_edges(wisp_instance.startnode)
-		visited.add(wisp_instance.startnode)
+		# visited.add(wisp_instance.startnode)
 		# remove edges from both ends from all inner sequences
 		# if more than one neighbor in interval
 		if len(wisp_instance.optimal_path) > 1:
-			for interval in wisp_instance.intervals[:-1]:
-				seq_obj = interval.name
+			for interval in wisp_instance.optimal_path[:-1]:
+				seq_obj = interval.node[0]
 				self.remove_nbr_edges((seq_obj,True))
 				self.remove_nbr_edges((seq_obj,False))
-				visited.add((seq_obj,True))
-				visited.add((seq_obj,False))
+				# visited.add((seq_obj,True))
+				# visited.add((seq_obj,False))
 
 		# remove edges from one end (inner end) from end node
-		last_node_in_path = wisp_instance.intervals[-1].name
+		last_node_in_path = wisp_instance.optimal_path[-1].node
 		self.remove_nbr_edges(last_node_in_path)
-		visited.add(last_node_in_path)
-		return(visited)
+		# visited.add(last_node_in_path)
+		# return(visited)
 			
 	def construct_trusted_edges(self,wisp_instance):
 		''' Takes a weighted interval scheduling problem instance that
@@ -79,10 +79,10 @@ class SequenceGraph(Graph):
 			solution.
 		'''
 		# make first trusted edge
-		self.add_edge(wisp_instance.startnode,wisp_instance.intervals[0].name,d=wisp_instance.intervals[0].start,s=None)
+		self.add_edge(wisp_instance.startnode,wisp_instance.optimal_path[0].node,d=wisp_instance.optimal_path[0].start,s=None)
 		# the rest 
-		for i1, i2 in zip(wisp_instance.intervals, wisp_instance.intervals[1:]):
-			self.add_edge((i1.name[0],not i1.name[1]),i2.name, d=i2.start - i1.end,s=None)
+		for i1, i2 in zip(wisp_instance.optimal_path, wisp_instance.optimal_path[1:]):
+			self.add_edge((i1.node[0],not i1.node[1]),i2.node, d=i2.start - i1.end,s=None)
 
 
 class LinearPath(SequenceGraph):

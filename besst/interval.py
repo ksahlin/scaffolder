@@ -30,12 +30,12 @@ The algorithm's runtime is O(n log n) in the worst case
 
 class Interval(object):
     """docstring for Interval"""
-    def __init__(self, start,end,weight,name):
+    def __init__(self, start,end,weight,node):
         super(Interval, self).__init__()
         self.start = start
         self.end = end
         self.weight = weight
-        self.name = name
+        self.node = node
         
 
 class WeightedIntervalProblem(object):
@@ -95,7 +95,6 @@ class WeightedIntervalProblem(object):
 
         find_optimal_path(len(G))
         return S[len(G)]
-
 
 
 if __name__ == "__main__":

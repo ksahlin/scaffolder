@@ -10,7 +10,7 @@ from besst.sequence import SubSequence
 from besst.sequence import Contig
 
 
-def main(args):
+def read_input(args):
 	##
 	# Hande input to scaffolding from three different files
 	# 1. A contig fasta file.
@@ -37,13 +37,17 @@ def main(args):
 
 	##
 	# Create edges
-	for seq1,orientation1, seq2, orientation2, link_count in  input_.get_links(open(args.links,'r')):
+	for seq1,orientation1, seq2, orientation2, link_count, gap in  input_.get_links(open(args.links,'r')):
 		#TODO: Calculate distance here
-		G.add_edge((subsequences[ seq1 ] ,orientation1),(subsequences[ seq2 ],orientation2),d=0,s=score.nr_links(link_count))
+		G.add_edge((subsequences[ seq1 ] ,orientation1),(subsequences[ seq2 ],orientation2),d=gap,s=score.nr_links(link_count))
 
 	G.remove_self_links()
 
+	return(G)
 
+
+
+def compute_weighted_interval_solutions(G):
 	score_list=[]
 	for node in G.nodes_iter():
 		nbrs = G.neighbors(node)
@@ -51,33 +55,43 @@ def main(args):
 			wip = interval.WeightedIntervalProblem(node)
 			for nbr in nbrs:
 				i = interval.Interval(start=G[node][nbr]['d'], 
-					end=G[node][nbr]['d'] + len(nbr[0]),weight=G[node][nbr]['s'],name=nbr)
+					end=G[node][nbr]['d'] + len(nbr[0]),weight=G[node][nbr]['s'],node=nbr)
 				wip.add_interval(i)
 
 			wip.weighted_interval_scheduling()
-			score_list.append(wip)
+			wip.intervals = []
+			score_list.append(wip) 
+	return(score_list)
 
+
+def make_trusted_paths(G,score_list):
 	visited = set()
+	for i in sorted(score_list,reverse=True,key=lambda x : x.score):
+		print i.score, i.startnode,i.optimal_path
 	for wisp_instance in sorted(score_list,reverse=True,key=lambda x : x.score):
 		potential_nodes_to_join =set()
 		potential_nodes_to_join.add(wisp_instance.startnode)
 		if len(wisp_instance.optimal_path) > 1:
-			for seq_obj in map(lambda x: x[3][0], wisp_instance.optimal_path[:-1]):
-				potential_nodes_to_join.add(seq_obj,True)
-				potential_nodes_to_join.add(seq_obj,False)
-		potential_nodes_to_join.add(wisp_instance.optimal_path[-1].name)
+			for seq_obj in map(lambda x: x.node[0], wisp_instance.optimal_path[:-1]):
+				potential_nodes_to_join.add((seq_obj,True))
+				potential_nodes_to_join.add((seq_obj,False))
+		potential_nodes_to_join.add(wisp_instance.optimal_path[-1].node)
 
 		if not visited.intersection(potential_nodes_to_join):
+			print "here", wisp_instance.score
+			print potential_nodes_to_join
 			##
 			# make trusted path create an unbreakable linear path in the
 			# scaffold graph and returns all the visited nodes
-			visited_nodes = G.remove_deactivated_edges(wisp_instance) 
+			G.remove_deactivated_edges(wisp_instance) 
 			G.construct_trusted_edges(wisp_instance)
 
-			visited.update(visited_nodes)
+			visited.update(potential_nodes_to_join)
+			print 'vis:'
+			print visited
 
 
-
+def make_scaffolds(G):
 	##
 	# Make scaffolds
 
@@ -86,15 +100,16 @@ def main(args):
 	for node in G.nodes_iter():
 		##
 		# fount start node
-		if not G.neighbors((node[0],True)):
-			start_nodes.add((node[0],True))
-		if not G.neighbors((node[0],False)):
-			start_nodes.add((node[0],False))
-
-
+		if not G.neighbors(node):
+			start_nodes.add(node)
+		# if not G.neighbors((node[0],True)):
+		# 	start_nodes.add((node[0],True))
+		# if not G.neighbors((node[0],False)):
+		# 	start_nodes.add((node[0],False))
 
 	visited =set()
 	scaffold_index = 1
+	print start_nodes
 	for start_node in start_nodes:
 		if start_node not in visited:
 			s = Scaffold(scaffold_index)
@@ -102,19 +117,30 @@ def main(args):
 			for node,gap in path:
 				if node[1]:
 					node[0].rc = False
+					print repr(node[0])
 					s(str(node[0]))
 				else:
 					node[0].rc = True
+					print repr(node[0])
 					s(str(node[0]))
 				if gap <= 0:
 					s('n')
 				else:
 					s('N'*gap)
+
+			# Add both first and last node (the are both "start nodes" by def).
 			visited.add(start_node)
 			visited.add(node)
 			print '>scaffold'+str(scaffold_index)
 			print s
 			scaffold_index += 1
+
+
+def main(args):
+	G = read_input(args)
+	score_list = compute_weighted_interval_solutions(G)
+	make_trusted_paths(G,score_list)
+	make_scaffolds(G)
 
 
 if __name__ == "__main__":

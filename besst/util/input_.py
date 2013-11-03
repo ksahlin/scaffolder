@@ -1,4 +1,6 @@
 import os
+import sys
+
 import pysam
 
 ##
@@ -23,15 +25,22 @@ def get_subsequences(subseq_file):
 		subseq,contig, start_pos, end_pos = line.split()
 		yield subseq, contig, int(start_pos), int(end_pos)
 
+def get_orientation(o,s1,s2):
+    if int(o) == 1:
+        return True 
+    elif int(o) == 0:
+        return False
+    else:
+        sys.stderr.write('Orientation incorrectly specified for link: {0}, {1}.'.format(s1,s2))
+        raise IOError
+
 def get_links(link_file):
 	for line in link_file:
 		if line[0] == '%':
 			continue
 		else:
-			s1, orientation1, s2, orientation2, nr_links = line.split()
-			o1 = True if int(orientation1) == 1 else False
-			o2 = True if int(orientation2) == 1 else False
-			yield s1, o1, s2, o2, int(nr_links)
+			s1, o1, s2, o2, nr_links, gap = line.split()
+			yield s1, get_orientation(o1,s1,s2), s2, get_orientation(o2,s1,s2), int(nr_links), int(gap)
 
 
 def get_contigs(contig_file):
