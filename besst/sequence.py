@@ -46,9 +46,16 @@ class SubSequence(object):
 
 class Contig(object):
 	"""Docstring for Contig"""
-	def __init__(self,name,sequence):
+	def __init__(self,name, tid=None, sequence = None, length = None):
 		super(Contig, self).__init__()
 		self.name = name
+		self.tid = tid
+		self.sequence = sequence
+		self.length = length
+		self.breakpoints = []
+		self.neighbors = {}
+
+	def add_sequence(self):
 		self.sequence = sequence
 
 
