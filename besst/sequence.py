@@ -55,8 +55,6 @@ class Contig(object):
 		self.breakpoints = []
 		self.neighbors = {}
 
-	def add_sequence(self):
-		self.sequence = sequence
 
 
 

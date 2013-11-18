@@ -53,15 +53,27 @@ class BasePairTracker(object):
             #print position
             self.active_bps[ position ].span_coverage += 1
 
-    def return_stats(self):
+    def breakpoints(self):
+        break_coordinates = []
         start = self.interval
         end = int(round(self.contig.length, -2))
-
-        for position in range(start, end, self.interval):
+        last_break_point = 0
+        for position in range(start, end, self.interval)[1:]:
+            # print position, next_position
             #TODO: find fancy way of calling a breakpoint here
             # If position does not exist in "active_bps", it returns 0. Thus, it will also enter the if-statement
-            if self.active_bps[ position ].span_coverage < 1:
-                self.contig.breakpoints.append( (position, self.active_bps[ position ].span_coverage))
+            if self.active_bps[ position ].span_coverage < 1 :
+                #print position - prev_position
+                if  position - last_break_point > self.interval:
+                    break_coordinates.append( (position, self.active_bps[ position ].span_coverage))
+
+                last_break_point = position
+                
+        return(break_coordinates)
+
+    # def breakpoints(self):
+    #     for point in self.tracked_points:
+    #         pass
 
 
 ##
