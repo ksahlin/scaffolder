@@ -91,16 +91,18 @@ class LinearPath(SequenceGraph):
 	def __init__(self, graph, node):
 		super(LinearPath, self).__init__()
 		self.graph = graph
+		self.visited = set()
 		self.node = (node[0],not node[1])
 		self.exit = False
 	def __iter__(self):
 		return self
 
 	def next(self):
-		if self.exit:
+		if self.exit or self.node in self.visited:
 			raise StopIteration
 
 		node = self.node
+		self.visited.add(node)
 		nbr = self.graph.neighbors(self.node)
 		if not nbr:
 			self.exit = True
@@ -110,21 +112,5 @@ class LinearPath(SequenceGraph):
 			self.node = (nbr[0][0],not nbr[0][1])
 			gap = self.graph[node][nbr[0]]['d']
 			return(node,gap)
-
-		
-
-
-
-
-
-
-	# def make_scaffolds(self):
-	# 	return
-
-
-		
-	# def closest_neighbor(self):
-	# 	super(SequenceGraph, self).neighbors(self.closest_neighbor)
-	# 	pass
 
 

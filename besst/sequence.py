@@ -1,3 +1,5 @@
+import bisect
+
 class SubSequence(object):
 	"""Docstring for Subsequence"""
 	reverse_table = {'A':'T','C':'G','G':'C','T':'A'}
@@ -54,8 +56,18 @@ class Contig(object):
 		self.length = length
 		self.breakpoints = []
 		self.neighbors = {}
+		self.subsequences = []
 
+	def add_subsequence(self,start,stop,seq):
+		self.subsequences.append((start,stop,seq))
 
+	def get_subseq_pos_len(self,contig_pos):
+		for start,stop,seq in self.subsequences:
+			if contig_pos >= start and contig_pos <= stop:
+				return contig_pos - start,seq, stop - start + 1 
+
+		
+		return -1,False,-1
 
 
 class Scaffold(object):

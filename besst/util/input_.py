@@ -3,6 +3,7 @@ import sys
 
 import pysam
 
+from collections import defaultdict
 ##
 # Opens a .bam or .sam file and returns the file
 # object.
@@ -36,7 +37,7 @@ def get_orientation(o,s1,s2):
 
 def get_links(link_file):
 	for line in link_file:
-		if line[0] == '%':
+		if line[0] == '#':
 			continue
 		else:
 			s1, o1, s2, o2, nr_links, gap = line.split()
@@ -57,4 +58,44 @@ def get_contigs(contig_file):
         	accession = line[1:].strip().split()[0]
         else:
             sequence += line.strip()
-    	yield accession, sequence
+    yield accession, sequence
+
+class SequenceConnectionHandler(object):
+    """docstring for SequenceConnectionHandler"""
+    def __init__(self, id_nr):
+        super(SequenceConnectionHandler, self).__init__()
+        self.id_nr = id_nr
+        self.connections_forward = defaultdict(list)
+        self.connections_reverse = defaultdict(list)        
+    def add_link(self,len1,pos1,is_rc1,other,len2,pos2,is_rc2):
+        #TODO: change 100 to parameter.readlength
+        if is_rc1:
+            obs1 = pos1 + 100
+        else:
+            obs1 = len1 - pos1
+        if is_rc2:
+            obs2 = pos2 + 100
+        else:
+            obs2 = len2 - pos2
+
+        if not is_rc1:
+            self.connections_forward[(other,1-is_rc2)].append((obs1,obs2))
+        else:
+            self.connections_reverse[(other,1-is_rc2)].append((obs1,obs2))
+
+    def make_connections_to_string(self,dict_,not_rc):
+        i_am = ''
+        for edge in dict_:
+            i_am += '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n'.format(self.id_nr, not_rc, edge[0], str(edge[1]), len(dict_[edge]),0) #replace 0 with gap
+            obs_first = '# '
+            obs_second = '# '
+            for link in dict_[edge]:
+                obs_first += str(link[0]) + ' '
+                obs_second += str(link[1]) + ' '
+                
+            i_am += obs_first+'\n' + obs_second +'\n'
+        return(i_am)
+
+    def __str__(self):
+        return self.make_connections_to_string(self.connections_forward,1) + self.make_connections_to_string(self.connections_reverse,0)
+

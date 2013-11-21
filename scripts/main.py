@@ -11,15 +11,15 @@ from besst.sequence import Contig
 
 
 def read_input(args):
-	##
-	# Hande input to scaffolding from three different files
-	# 1. A contig fasta file.
-	# 2. A contigs to subsequenc file (made when parsing bam file)
-	# 3. A link file that describes all linkings of contigs (made when parsing bam file). 
-
+	'''
+	Handle input to scaffolding from three different files
+	1. A contig fasta file.
+	2. A contigs to subsequenc file (made when parsing bam file)
+	3. A link file that describes all linkings of contigs (made when parsing bam file). 
+	'''
 	contigs ={}
 	for accession,sequence in input_.get_contigs(open(args.contigs,'r')):
-		c = Contig(accession,sequence)
+		c = Contig(accession, sequence = sequence)
 		contigs[c.name] = c
 
 	subsequences = {}
@@ -27,6 +27,7 @@ def read_input(args):
 		s =SubSequence( subseq_name, contigs[contig], start_pos, end_pos)
 		subsequences[subseq_name] = s
 
+	#print len(subsequences)
 	G = g()
 
 	##
@@ -39,10 +40,13 @@ def read_input(args):
 	# Create edges
 	for seq1,orientation1, seq2, orientation2, link_count, gap in  input_.get_links(open(args.links,'r')):
 		#TODO: Calculate distance here
-		G.add_edge((subsequences[ seq1 ] ,orientation1),(subsequences[ seq2 ],orientation2),d=gap,s=score.nr_links(link_count))
+
+		#TODO: Add threshold parameter
+		if link_count >= 5:
+
+			G.add_edge((subsequences[ seq1 ] ,orientation1),(subsequences[ seq2 ],orientation2),d=gap,s=score.nr_links(link_count))
 
 	G.remove_self_links()
-
 	return(G)
 
 
@@ -71,6 +75,7 @@ def make_trusted_paths(G,score_list):
 		if wisp_instance.score > 0: # 0 score if no solution was found, e.g. too large overlap
 			potential_nodes_to_join =set()
 			potential_nodes_to_join.add(wisp_instance.startnode)
+			#print wisp_instance.score,wisp_instance.optimal_path[0].node[0].contig.name
 			if len(wisp_instance.optimal_path) > 1:
 				for seq_obj in map(lambda x: x.node[0], wisp_instance.optimal_path[:-1]):
 					potential_nodes_to_join.add((seq_obj,True))
@@ -93,6 +98,9 @@ def make_scaffolds(G):
 	##
 	# Make scaffolds
 
+	# TODO: Take care of cycles
+	# Two different types: those with a start node and those without start node
+
 	# find start nodes
 	start_nodes = set()
 	for node in G.nodes_iter():
@@ -100,11 +108,10 @@ def make_scaffolds(G):
 		# fount start node
 		if not G.neighbors(node):
 			start_nodes.add(node)
-		# if not G.neighbors((node[0],True)):
-		# 	start_nodes.add((node[0],True))
-		# if not G.neighbors((node[0],False)):
-		# 	start_nodes.add((node[0],False))
 
+
+	#print len(G.nodes())
+	#print len(start_nodes)
 	visited =set()
 	scaffold_index = 1
 	for start_node in start_nodes:
@@ -112,6 +119,7 @@ def make_scaffolds(G):
 			s = Scaffold(scaffold_index)
 			path = LinearPath(G,start_node)
 			for node,gap in path:
+				#print node[0].name,node[0].contig.name #, node[0].contig.sequence
 				if node[1]:
 					node[0].rc = False
 					s(str(node[0]))
