@@ -2,7 +2,8 @@ import bisect
 
 class SubSequence(object):
 	"""Docstring for Subsequence"""
-	reverse_table = {'A':'T','C':'G','G':'C','T':'A'}
+	#TODO: Look up what the reverse complement is for all other charachters Y,R,S etc...
+	reverse_table = {'A':'T','C':'G','G':'C','T':'A','Y':'Y','R':'R','S':'S','M':'M','K':'K','W':'W'}
 	def __init__(self, name, contig_object,contig_start,contig_end):
 		super (SubSequence, self).__init__()
 		self.name = name

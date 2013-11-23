@@ -1,9 +1,11 @@
 import os
 import sys
+import itertools
+from collections import defaultdict
 
 import pysam
 
-from collections import defaultdict
+
 ##
 # Opens a .bam or .sam file and returns the file
 # object.
@@ -36,12 +38,31 @@ def get_orientation(o,s1,s2):
         raise IOError
 
 def get_links(link_file):
-	for line in link_file:
-		if line[0] == '#':
-			continue
-		else:
-			s1, o1, s2, o2, nr_links, gap = line.split()
-			yield s1, get_orientation(o1,s1,s2), s2, get_orientation(o2,s1,s2), int(nr_links), int(gap)
+    while True:
+        next_3_lines = list(itertools.islice(link_file, 3))
+        if not next_3_lines:
+            break
+        else:
+            s1, o1, s2, o2, nr_links, gap = next_3_lines[0].split()
+            obs_list1 = map(lambda x: int(x), next_3_lines[1][1:].split())
+            obs_list2 = map(lambda x: int(x), next_3_lines[2][1:].split())
+            print obs_list1
+            print obs_list2
+            filtered_observations = filter(lambda x: x < 4600, [i+j for i,j in zip(obs_list1,obs_list2)])
+            if len(filtered_observations) > 5:
+                mean_obs = sum(filtered_observations)/len(filtered_observations)
+                print mean_obs
+                yield (s1, get_orientation(o1,s1,s2), s2, get_orientation(o2,s1,s2), int(nr_links), int(gap)), 3600 - mean_obs
+            else: 
+                continue
+            #yield (s1, get_orientation(o1,s1,s2), s2, get_orientation(o2,s1,s2), int(nr_links), int(gap)), 3600 - mean_obs
+	# for line in link_file:
+	# 	if line[0] == '#':
+ #            obs 
+	# 		continue
+	# 	else:
+	# 		s1, o1, s2, o2, nr_links, gap = line.split()
+	# 		yield s1, get_orientation(o1,s1,s2), s2, get_orientation(o2,s1,s2), int(nr_links), int(gap)
 
 
 def get_contigs(contig_file):

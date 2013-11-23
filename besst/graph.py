@@ -49,7 +49,7 @@ class SequenceGraph(Graph):
 
 	def remove_deactivated_edges(self,wisp_instance):
 		''' Takes a weighted interval scheduling problem instance that
-			has been given an optimal sulution (using a common DP- algorithm)
+			has been given an optimal solution (using a common DP- algorithm)
 			and removes all edges from intervals that was not included in the optimal solution.
 		'''
 		# visited = set()
@@ -71,6 +71,17 @@ class SequenceGraph(Graph):
 		self.remove_nbr_edges(last_node_in_path)
 		# visited.add(last_node_in_path)
 		# return(visited)
+
+		#TODO: Double check the sanity of this cycle removal. Create test instance for this
+		# Eventual cycle removal:
+		# if other end of first node connects to other end of last node in path
+		# connect to eachother (cycle).
+		other_end_first = (wisp_instance.startnode[0], 1-wisp_instance.startnode[1])
+		other_end_last = (last_node_in_path[0],1-last_node_in_path[1])
+		if other_end_first == other_end_last:
+			#print 'LLLLOOOOOLLL'
+			self.remove_nbr_edges(other_end_last)
+
 			
 	def construct_trusted_edges(self,wisp_instance):
 		''' Takes a weighted interval scheduling problem instance that
