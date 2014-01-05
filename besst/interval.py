@@ -36,6 +36,8 @@ class Interval(object):
         self.end = end
         self.weight = weight
         self.node = node
+    def __str__(self):
+        return str(str(self.node)+', weight:'+str(self.weight)+', coord: ('+str(self.start)+','+str(self.end))
         
 
 class WeightedIntervalProblem(object):

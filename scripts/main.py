@@ -1,4 +1,5 @@
 import argparse
+import sys
 
 from besst.sequence import Scaffold
 from besst import score
@@ -42,9 +43,10 @@ def read_input(args):
 	for (seq1,orientation1, seq2, orientation2, link_count, gap), naive_gap in  input_.get_links(open(args.links,'r')):
 		#TODO: Calculate distance here
 		#TODO: Add threshold parameter
-		#if link_count >= 5:
-
-		G.add_edge((subsequences[ seq1 ] ,orientation1),(subsequences[ seq2 ],orientation2),d=naive_gap,s=score.nr_links(link_count))
+		if link_count >= 5:
+			if naive_gap < - args.overlap:
+				naive_gap = 0
+			G.add_edge((subsequences[ seq1 ] ,orientation1),(subsequences[ seq2 ],orientation2),d=naive_gap,s=score.nr_links(link_count))
 
 	G.remove_self_links()
 
@@ -58,14 +60,29 @@ def compute_weighted_interval_solutions(G,overlap):
 		nbrs = G.neighbors(node)
 		if nbrs:
 			wip = interval.WeightedIntervalProblem(node)
+			max_allowed_overlap = len(node[0])
 			for nbr in nbrs:
+				# ony neigbours of which the score for this particular 
+				# local interval instance are the most is considered.
+				if max(map(lambda x: G[nbr][x]['s'],G.neighbors(nbr))) != G[node][nbr]['s']: # and len(nbr[0]) > 400:
+					#print max(map(lambda x: G[node][nbr]['s'],G.neighbors(node))), G[node][nbr]['s']
+					continue
 				i = interval.Interval(start=G[node][nbr]['d'], 
 					end=G[node][nbr]['d'] + len(nbr[0]),weight=G[node][nbr]['s'],node=nbr)
 				wip.add_interval(i)
+				if len(nbr[0]) < max_allowed_overlap:
+					max_allowed_overlap = len(nbr[0])-1
 
-			wip.weighted_interval_scheduling(overlap)
-			wip.intervals = []
-			score_list.append(wip) 
+			# if overlap parameter is larger than a contig in ISP, we cannot track
+			# solution, this must therefore never happen. Set the overlap parameter 
+			# dynamically here to less than smallest contig size
+			if wip.intervals:
+				wip.weighted_interval_scheduling(min(overlap,max_allowed_overlap))
+				wip.intervals = []
+				score_list.append(wip) 
+			#print wip.score,len(wip.optimal_path)
+			#for i in wip.optimal_path:
+			#	print str(i)
 
 	return(score_list)
 
@@ -76,7 +93,7 @@ def make_trusted_paths(G,score_list):
 		if wisp_instance.score > 0: # 0 score if no solution was found, e.g. too large overlap
 			potential_nodes_to_join = set()
 			potential_nodes_to_join.add(wisp_instance.startnode)
-			#print wisp_instance.score,wisp_instance.optimal_path[0].node[0].contig.name
+			#print wisp_instance.score,wisp_instance.optimal_path[0].node[0].contig.name,G[wisp_instance.optimal_path[0].node]
 			if len(wisp_instance.optimal_path) > 1:
 				for seq_obj in map(lambda x: x.node[0], wisp_instance.optimal_path[:-1]):
 					potential_nodes_to_join.add((seq_obj,True))
@@ -122,7 +139,7 @@ def make_scaffolds(G,scaffold_index):
 			s = Scaffold(scaffold_index)
 			path = LinearPath(G,start_node)
 			for node,gap in path:
-				#print node, node[0].name,node[0].contig.name #, node[0].contig.sequence
+				# print node, node[0].name,node[0].contig.name, G[node],gap #, node[0].contig.sequence
 				if node[1]:
 					node[0].rc = False
 					s(str(node[0]))

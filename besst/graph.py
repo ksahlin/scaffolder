@@ -91,6 +91,7 @@ class SequenceGraph(Graph):
 		'''
 		# make first trusted edge
 		self.add_edge(wisp_instance.startnode,wisp_instance.optimal_path[0].node,d=wisp_instance.optimal_path[0].start,s=None)
+		# print wisp_instance.score
 		# the rest 
 		for i1, i2 in zip(wisp_instance.optimal_path, wisp_instance.optimal_path[1:]):
 			self.add_edge((i1.node[0],not i1.node[1]),i2.node, d=i2.start - i1.end,s=None)

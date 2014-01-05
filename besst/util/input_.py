@@ -46,12 +46,12 @@ def get_links(link_file):
             s1, o1, s2, o2, nr_links, gap = next_3_lines[0].split()
             obs_list1 = map(lambda x: int(x), next_3_lines[1][1:].split())
             obs_list2 = map(lambda x: int(x), next_3_lines[2][1:].split())
-            print obs_list1
-            print obs_list2
-            filtered_observations = filter(lambda x: x < 4600, [i+j for i,j in zip(obs_list1,obs_list2)])
+            # if len(obs_list1) >30:
+            #      print sum([i+j for i,j in zip(obs_list1,obs_list2)])/len(obs_list1), len(obs_list1), 'seqs:',s1,s2
+
+            filtered_observations = filter(lambda x: x < 5000, [i+j for i,j in zip(obs_list1,obs_list2)])
             if len(filtered_observations) > 5:
                 mean_obs = sum(filtered_observations)/len(filtered_observations)
-                print mean_obs
                 yield (s1, get_orientation(o1,s1,s2), s2, get_orientation(o2,s1,s2), int(nr_links), int(gap)), 3600 - mean_obs
             else: 
                 continue

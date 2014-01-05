@@ -63,7 +63,6 @@ def main(args):
 	args.sequence_file.close()
 
 
-	#TODO: We need to check if read is aligned forward or reverse to contig to get correct orientation!
 	bam_file = bamio.open_bam_file(args.alignment_file)
 	curr_seq = 0
 	prev_contig = 0
